@@ -8,15 +8,9 @@ import com.coffee.repository.CoffeeMachineRepository;
 import com.coffee.repository.FacilityRepository;
 import com.coffee.repository.UsageHistoryRepository;
 import com.hivemq.client.mqtt.MqttClient;
-import com.hivemq.client.mqtt.MqttClientState;
 import com.hivemq.client.mqtt.MqttGlobalPublishFilter;
 import com.hivemq.client.mqtt.datatypes.MqttQos;
-import com.hivemq.client.mqtt.lifecycle.MqttClientConnectedContext;
-import com.hivemq.client.mqtt.lifecycle.MqttClientConnectedListener;
-import com.hivemq.client.mqtt.lifecycle.MqttClientDisconnectedContext;
-import com.hivemq.client.mqtt.lifecycle.MqttClientDisconnectedListener;
 import com.hivemq.client.mqtt.mqtt3.Mqtt3AsyncClient;
-import com.hivemq.client.mqtt.mqtt3.message.subscribe.Mqtt3Subscribe;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,16 +29,16 @@ public class MqttService {
 	private final FacilityRepository facilityRepository;
 	private final UsageHistoryRepository usageHistoryRepository;
 
-	@Value("${mqtt.host:broker.hivemq.com}")
+	@Value("${mqtt.host}")
 	private String mqttHost;
 
-	@Value("${mqtt.port:1883}")
+	@Value("${mqtt.port}")
 	private int mqttPort;
 
-	@Value("${mqtt.username:YOUR_USERNAME}")
+	@Value("${mqtt.username}")
 	private String mqttUsername;
 
-	@Value("${mqtt.password:YOUR_PASSWORD}")
+	@Value("${mqtt.password}")
 	private String mqttPassword;
 
 	public MqttService(CoffeeMachineRepository coffeeMachineRepository,
@@ -62,17 +56,24 @@ public class MqttService {
 					.useMqttVersion3()
 					.serverHost(mqttHost)
 					.serverPort(mqttPort)
+					.sslWithDefaultConfig()
 					.automaticReconnectWithDefaultConfig()
 					.buildAsync();
 
-			client.connectWith().send().whenComplete((connAck, throwable) -> {
-				if (throwable != null) {
-					log.error("MQTT connection failed", throwable);
-					return;
-				}
-				log.info("MQTT connected");
-				subscribe(client);
-			});
+			client.connectWith()
+					.simpleAuth()
+					.username(mqttUsername)
+					.password(mqttPassword.getBytes(StandardCharsets.UTF_8))
+					.applyConnect()
+					.send()
+					.whenComplete((connAck, throwable) -> {
+						if (throwable != null) {
+							log.error("MQTT connection failed", throwable);
+							return;
+						}
+						log.info("MQTT connected");
+						subscribe(client);
+					});
 
 			client.publishes(MqttGlobalPublishFilter.ALL, publish -> {
 				String topic = publish.getTopic().toString();
@@ -94,7 +95,6 @@ public class MqttService {
 	}
 
 	private void processMessage(String topic, String payload) {
-		// topic format: coffeeMachine/{id}/{metric}
 		String[] parts = topic.split("/");
 		if (parts.length != 3) return;
 		Long machineId = parseLong(parts[1]);
@@ -104,7 +104,6 @@ public class MqttService {
 		Optional<CoffeeMachine> optional = coffeeMachineRepository.findById(machineId);
 		CoffeeMachine machine = optional.orElseGet(() -> {
 			CoffeeMachine m = new CoffeeMachine();
-			// attach default facility if not present
 			Facility facility = facilityRepository.findById(1L).orElseGet(() -> {
 				Facility f = new Facility();
 				f.setName("Default Facility");
