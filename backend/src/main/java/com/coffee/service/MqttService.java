@@ -42,13 +42,8 @@ public class MqttService {
 	private String mqttPassword;
 
 	public MqttService(CoffeeMachineRepository coffeeMachineRepository,
-<<<<<<< HEAD
 			FacilityRepository facilityRepository,
 			UsageHistoryRepository usageHistoryRepository) {
-=======
-	                  FacilityRepository facilityRepository,
-	                  UsageHistoryRepository usageHistoryRepository) {
->>>>>>> 1efa862b790a1f29a9c518596ac9b6dba7a97066
 		this.coffeeMachineRepository = coffeeMachineRepository;
 		this.facilityRepository = facilityRepository;
 		this.usageHistoryRepository = usageHistoryRepository;
@@ -56,10 +51,7 @@ public class MqttService {
 
 	@PostConstruct
 	public void init() {
-<<<<<<< HEAD
 		log.info("MqttService.init() starting...");
-=======
->>>>>>> 1efa862b790a1f29a9c518596ac9b6dba7a97066
 		try {
 			Mqtt3AsyncClient client = MqttClient.builder()
 					.useMqttVersion3()
@@ -73,11 +65,7 @@ public class MqttService {
 					.simpleAuth()
 					.username(mqttUsername)
 					.password(mqttPassword.getBytes(StandardCharsets.UTF_8))
-<<<<<<< HEAD
 					.applySimpleAuth()
-=======
-					.applyConnect()
->>>>>>> 1efa862b790a1f29a9c518596ac9b6dba7a97066
 					.send()
 					.whenComplete((connAck, throwable) -> {
 						if (throwable != null) {
@@ -104,7 +92,6 @@ public class MqttService {
 	}
 
 	private void subscribe(Mqtt3AsyncClient client) {
-<<<<<<< HEAD
 		client.subscribeWith()
 				.topicFilter("coffeeMachine/+/+")
 				.qos(MqttQos.AT_LEAST_ONCE)
@@ -131,17 +118,6 @@ public class MqttService {
 		String metric = parts[2];
 		if (machineId == null)
 			return;
-=======
-		client.subscribeWith().topicFilter("coffeeMachine/+/+").qos(MqttQos.AT_LEAST_ONCE).send();
-	}
-
-	private void processMessage(String topic, String payload) {
-		String[] parts = topic.split("/");
-		if (parts.length != 3) return;
-		Long machineId = parseLong(parts[1]);
-		String metric = parts[2];
-		if (machineId == null) return;
->>>>>>> 1efa862b790a1f29a9c518596ac9b6dba7a97066
 
 		Optional<CoffeeMachine> optional = coffeeMachineRepository.findById(machineId);
 		CoffeeMachine machine = optional.orElseGet(() -> {
@@ -170,18 +146,13 @@ public class MqttService {
 				h.setUser("simulator");
 				usageHistoryRepository.save(h);
 			}
-<<<<<<< HEAD
 			default -> {
 			}
-=======
-			default -> {}
->>>>>>> 1efa862b790a1f29a9c518596ac9b6dba7a97066
 		}
 		coffeeMachineRepository.save(machine);
 	}
 
 	private Long parseLong(String s) {
-<<<<<<< HEAD
 		try {
 			return Long.parseLong(s);
 		} catch (Exception e) {
@@ -203,14 +174,5 @@ public class MqttService {
 		} catch (Exception e) {
 			return null;
 		}
-=======
-		try { return Long.parseLong(s); } catch (Exception e) { return null; }
-	}
-	private Integer parseInt(String s) {
-		try { return Integer.parseInt(s); } catch (Exception e) { return null; }
-	}
-	private Double parseDouble(String s) {
-		try { return Double.parseDouble(s); } catch (Exception e) { return null; }
->>>>>>> 1efa862b790a1f29a9c518596ac9b6dba7a97066
 	}
 }
