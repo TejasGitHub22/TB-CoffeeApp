@@ -91,8 +91,6 @@ public class MqttService {
 		}
 	}
 
-
-
 	private void subscribe(Mqtt3AsyncClient client) {
 		client.subscribeWith()
 				.topicFilter("coffeeMachine/+/+")
