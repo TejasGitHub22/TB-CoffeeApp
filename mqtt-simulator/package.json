@@ -7,8 +7,15 @@
     "start": "node src/index.js"
   },
   "dependencies": {
+<<<<<<< HEAD
     "bcryptjs": "^3.0.2",
     "dotenv": "^16.4.5",
     "mqtt": "^5.10.1"
   }
 }
+=======
+    "mqtt": "^5.10.1",
+    "dotenv": "^16.4.5"
+  }
+}
+>>>>>>> 1efa862b790a1f29a9c518596ac9b6dba7a97066
