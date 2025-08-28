@@ -36,6 +36,23 @@ public class AuthController {
 				.orElse(ResponseEntity.status(401).build());
 	}
 
+	// Alias to match frontend expectation: /api/auth/signin
+	@PostMapping("/signin")
+	public ResponseEntity<LoginResponse> signin(@RequestBody LoginRequest request) {
+		return login(request);
+	}
+
+	// Stub endpoints to satisfy frontend flows
+	@PostMapping("/signout")
+	public ResponseEntity<Map<String, String>> signout() {
+		return ResponseEntity.ok(Map.of("message", "Signed out successfully"));
+	}
+
+	@PostMapping("/signup")
+	public ResponseEntity<Map<String, String>> signup() {
+		return ResponseEntity.ok(Map.of("message", "User registered successfully"));
+	}
+
 	private String generate(User user) {
 		Map<String, Object> claims = new HashMap<>();
 		claims.put("role", user.getRole().name());

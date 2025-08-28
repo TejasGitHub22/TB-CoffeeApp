@@ -6,6 +6,10 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import java.util.Arrays;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -34,15 +38,30 @@ public class SecurityConfig {
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		http.csrf(csrf -> csrf.disable())
+			.cors(cors -> cors.configurationSource(corsConfigurationSource()))
 			.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(auth -> auth
-					.requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+					.requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/signin", "/api/auth/signup", "/api/auth/signout").permitAll()
 					.requestMatchers("/actuator/**").permitAll()
 					.requestMatchers("/api/admin/**").hasRole("ADMIN")
 					.requestMatchers("/api/facility/**").hasAnyRole("FACILITY", "ADMIN")
+					.requestMatchers("/api/health", "/api/usage/**").permitAll()
 					.anyRequest().authenticated())
 			.addFilterBefore(new JwtAuthFilter(jwtService), UsernamePasswordAuthenticationFilter.class);
 		return http.build();
+	}
+
+	@Bean
+	public CorsConfigurationSource corsConfigurationSource() {
+		CorsConfiguration configuration = new CorsConfiguration();
+		configuration.setAllowedOriginPatterns(Arrays.asList("http://localhost:*"));
+		configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+		configuration.setAllowedHeaders(Arrays.asList("*"));
+		configuration.setAllowCredentials(true);
+
+		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+		source.registerCorsConfiguration("/api/**", configuration);
+		return source;
 	}
 
 	@Component

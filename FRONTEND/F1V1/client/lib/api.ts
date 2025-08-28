@@ -392,6 +392,25 @@ class ApiClient {
     return this.makeRequest<any[]>(API_ENDPOINTS.MAINTENANCE_NEEDED)
       .catch(() => maintenanceMachines);
   }
+
+  // Usage analytics summary
+  async getUsageSummary(
+    period: 'daily' | 'weekly' | 'monthly' | 'yearly',
+    machineId?: string | number
+  ) {
+    const params = new URLSearchParams({ period });
+    if (machineId !== undefined && machineId !== null) {
+      params.append('machineId', String(machineId));
+    }
+    return this.makeRequest<{
+      period: string;
+      since: string;
+      until: string;
+      machineId?: number;
+      totalCups: number;
+      byBrewType: Record<string, number>;
+    }>(`/usage/summary?${params.toString()}`);
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);
