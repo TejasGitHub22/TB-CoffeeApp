@@ -2,7 +2,6 @@ package com.coffee.controller;
 
 import com.coffee.dto.LoginRequest;
 import com.coffee.dto.LoginResponse;
-import com.coffee.model.Role;
 import com.coffee.model.User;
 import com.coffee.repository.UserRepository;
 import com.coffee.security.JwtService;
@@ -32,7 +31,13 @@ public class AuthController {
 	public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
 		return userRepository.findByUsername(request.getUsername())
 				.filter(u -> passwordEncoder.matches(request.getPassword(), u.getPassword()))
-				.map(u -> ResponseEntity.ok(new LoginResponse(generate(u))))
+				.map(u -> {
+					String token = generate(u);
+					LoginResponse body = new LoginResponse(token, u.getId(), u.getUsername(), u.getUsername(), u.getRole().name());
+					u.setLastLogin(java.time.Instant.now());
+					userRepository.save(u);
+					return ResponseEntity.ok(body);
+				})
 				.orElse(ResponseEntity.status(401).build());
 	}
 
@@ -49,8 +54,31 @@ public class AuthController {
 	}
 
 	@PostMapping("/signup")
-	public ResponseEntity<Map<String, String>> signup() {
-		return ResponseEntity.ok(Map.of("message", "User registered successfully"));
+	public ResponseEntity<Map<String, String>> signup(@RequestBody Map<String, String> req) {
+		String username = req.getOrDefault("username", "");
+		String name = req.getOrDefault("name", username);
+		String password = req.getOrDefault("password", "");
+		String role = req.getOrDefault("role", "FACILITY");
+
+		if (username.isBlank() || password.isBlank()) {
+			return ResponseEntity.badRequest().body(Map.of("message", "username and password are required"));
+		}
+
+		return userRepository.findByUsername(username)
+				.<ResponseEntity<Map<String, String>>>map(u -> ResponseEntity.status(409).body(Map.of("message", "username already exists")))
+				.orElseGet(() -> {
+					User u = new User();
+					u.setUsername(username);
+					u.setPassword(passwordEncoder.encode(password));
+					try {
+						u.setRole(Enum.valueOf(com.coffee.model.Role.class, role.toUpperCase()));
+					} catch (Exception e) {
+						u.setRole(com.coffee.model.Role.FACILITY);
+					}
+					u.setCreatedAt(java.time.Instant.now());
+					userRepository.save(u);
+					return ResponseEntity.ok(Map.of("message", "User registered successfully"));
+				});
 	}
 
 	private String generate(User user) {

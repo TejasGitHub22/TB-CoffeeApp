@@ -19,6 +19,12 @@ public class User {
 	@Column(nullable = false)
 	private Role role;
 
+	@Column
+	private java.time.Instant createdAt;
+
+	@Column
+	private java.time.Instant lastLogin;
+
 	public Long getId() {
 		return id;
 	}
@@ -50,4 +56,9 @@ public class User {
 	public void setRole(Role role) {
 		this.role = role;
 	}
+
+	public java.time.Instant getCreatedAt() { return createdAt; }
+	public void setCreatedAt(java.time.Instant createdAt) { this.createdAt = createdAt; }
+	public java.time.Instant getLastLogin() { return lastLogin; }
+	public void setLastLogin(java.time.Instant lastLogin) { this.lastLogin = lastLogin; }
 }
