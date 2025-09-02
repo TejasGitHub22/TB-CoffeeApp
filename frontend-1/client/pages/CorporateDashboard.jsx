@@ -466,10 +466,19 @@ export default function CorporateDashboard() {
 
   // Load corporate data and merge with localStorage data
   useEffect(() => {
-    const loadData = () => {
+    const loadData = async () => {
       let loadedLocations = [...corporateLocations];
 
-      const storedMachines = dataManager.getAllMachinesFromSharedStorage();
+      // Try to load from backend simulator first
+      let storedMachines = [];
+      try {
+        console.log('🔗 Attempting to load machines from backend simulator...');
+        storedMachines = await apiClient.getMachines();
+        console.log(`✅ BACKEND CONNECTED: Loaded ${storedMachines.length} machines from backend simulator`);
+      } catch (error) {
+        console.log('🔄 Backend not available, loading from local storage:', error.message);
+        storedMachines = dataManager.getAllMachinesFromSharedStorage();
+      }
 
       if (storedMachines.length > 0) {
         console.log(`✅ ADMIN VIEW: Loaded ${storedMachines.length} machines from shared storage (cross-user sync enabled)`);
