@@ -18,6 +18,7 @@ import MachineManagement from "./pages/MachineManagement";
 import NotFound from "./pages/NotFound";
 import { officeNameToPath } from "./lib/officeRouting";
 import OfficeOverview from "./pages/OfficeOverview";
+import BackendTest from "./pages/BackendTest";
 import FloatingNavigation, { QuickBackFab } from "./components/FloatingNavigation";
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -75,6 +76,7 @@ function AppRoutes() {
         <Route path="/machine" element={<ProtectedRoute><MachineManagement /></ProtectedRoute>} />
         <Route path="/office/:officePath" element={<ProtectedRoute><OfficeOverview /></ProtectedRoute>} />
         <Route path="/machine/:machineId" element={<ProtectedRoute><MachineManagement /></ProtectedRoute>} />
+        <Route path="/backend-test" element={<BackendTest />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       {user && (

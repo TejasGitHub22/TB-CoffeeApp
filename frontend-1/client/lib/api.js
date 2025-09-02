@@ -274,7 +274,13 @@ class ApiClient {
   }
 
   async getMachines() {
-    return this.makeRequest(API_ENDPOINTS.MACHINES);
+    // Try simulator endpoint first, fallback to regular machines endpoint
+    try {
+      return await this.makeRequest('/simulator/machines');
+    } catch (error) {
+      console.log('Simulator endpoint not available, trying regular machines endpoint');
+      return this.makeRequest(API_ENDPOINTS.MACHINES);
+    }
   }
 
   async createMachine(machineData) {
@@ -285,7 +291,13 @@ class ApiClient {
   }
 
   async getMachine(id) {
-    return this.makeRequest(API_ENDPOINTS.MACHINE_BY_ID(id));
+    // Try simulator endpoint first
+    try {
+      return await this.makeRequest(`/simulator/machines/${id}`);
+    } catch (error) {
+      console.log('Simulator endpoint not available, trying regular machine endpoint');
+      return this.makeRequest(API_ENDPOINTS.MACHINE_BY_ID(id));
+    }
   }
 
   async getMachineByMachineId(machineId) {
@@ -300,10 +312,19 @@ class ApiClient {
   }
 
   async updateSupplies(id, supplies) {
-    return this.makeRequest(API_ENDPOINTS.MACHINE_SUPPLIES(id), {
-      method: "PUT",
-      body: JSON.stringify(supplies),
-    });
+    // Try simulator endpoint first
+    try {
+      return await this.makeRequest(`/simulator/machines/${id}/supplies`, {
+        method: "PUT",
+        body: JSON.stringify({ supplies }),
+      });
+    } catch (error) {
+      console.log('Simulator endpoint not available, trying regular supplies endpoint');
+      return this.makeRequest(API_ENDPOINTS.MACHINE_SUPPLIES(id), {
+        method: "PUT",
+        body: JSON.stringify(supplies),
+      });
+    }
   }
 
   async deleteMachine(id) {
@@ -352,6 +373,31 @@ class ApiClient {
     );
     return this.makeRequest(API_ENDPOINTS.MAINTENANCE_NEEDED)
       .catch(() => maintenanceMachines);
+  }
+
+  async getSystemMetrics() {
+    try {
+      return await this.makeRequest('/simulator/metrics');
+    } catch (error) {
+      console.log('Simulator metrics not available, generating local metrics');
+      const machines = sharedDataManager.getMachines();
+      return {
+        totalMachines: machines.length,
+        operationalMachines: machines.filter(m => m.status === 'operational').length,
+        maintenanceMachines: machines.filter(m => m.status === 'maintenance').length,
+        offlineMachines: machines.filter(m => m.status === 'offline').length,
+        timestamp: new Date().toISOString()
+      };
+    }
+  }
+
+  async getFacilities() {
+    try {
+      return await this.makeRequest('/simulator/facilities');
+    } catch (error) {
+      console.log('Simulator facilities not available, generating local data');
+      return [];
+    }
   }
 }
 
